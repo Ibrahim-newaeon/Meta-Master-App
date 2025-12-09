@@ -1,11 +1,7 @@
 // routes/audience.js
 const express = require('express');
 const router = express.Router();
-const { Pool } = require('pg');
-
-const pool = new Pool({
-  connectionString: process.env.DATABASE_URL || 'postgresql://postgres:password@localhost:5432/meta_funnel_db'
-});
+const pool = require('../db');
 
 // GET /api/audience/demographics
 router.get('/demographics', async (req, res) => {

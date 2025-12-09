@@ -2,11 +2,7 @@
 const metaClient = require('../metaClient');
 const funnelMapper = require('../funnelMapper');
 const countryAccountMapper = require('../countryAccountMapper');
-const { Pool } = require('pg');
-
-const pool = new Pool({
-    connectionString: process.env.DATABASE_URL
-});
+const pool = require('../db');
 
 class MetaDataETL {
     constructor() {

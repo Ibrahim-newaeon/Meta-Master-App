@@ -4,6 +4,7 @@ import KpiCards from '../components/KpiCards';
 import DashboardTable from '../components/DashboardTable';
 import Loading from '../components/Loading';
 import { apiClient } from '../services/apiClient';
+import { formatCurrency, formatNumber, formatMultiplier } from '../utils/formatters';
 import type { Filters, CampaignResponse } from '../types/api';
 
 const BOFDashboard: React.FC = () => {
@@ -35,10 +36,6 @@ const BOFDashboard: React.FC = () => {
       setLoading(false);
     }
   };
-
-  const formatCurrency = (value: number) => `$${value.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-  const formatNumber = (value: number) => value.toLocaleString();
-  const formatMultiplier = (value: number) => `${value.toFixed(2)}x`;
 
   // Calculate KPIs from campaign data
   const campaigns = data?.campaigns || [];

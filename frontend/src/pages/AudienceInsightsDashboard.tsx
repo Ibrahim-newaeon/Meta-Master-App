@@ -4,6 +4,7 @@ import DashboardTable from '../components/DashboardTable';
 import AudienceBreakdown from '../components/AudienceBreakdown';
 import Loading from '../components/Loading';
 import { apiClient } from '../services/apiClient';
+import { formatCurrency, formatNumber, formatPercentage, formatMultiplier } from '../utils/formatters';
 import type { Filters, AudienceResponse, DemographicData, LocationData, DeviceData, PlatformData } from '../types/api';
 
 type TabType = 'demographics' | 'location' | 'device' | 'platform';
@@ -58,11 +59,6 @@ const AudienceInsightsDashboard: React.FC = () => {
       setLoading(false);
     }
   };
-
-  const formatCurrency = (value: number) => `$${value.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-  const formatNumber = (value: number) => value.toLocaleString();
-  const formatPercentage = (value: number) => `${value.toFixed(2)}%`;
-  const formatMultiplier = (value: number) => `${value.toFixed(2)}x`;
 
   const tabs = [
     { id: 'demographics', label: 'Demographics', icon: '👥' },

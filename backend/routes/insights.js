@@ -4,11 +4,7 @@ const router = express.Router();
 const metaClient = require('../metaClient');
 const funnelMapper = require('../funnelMapper');
 const countryAccountMapper = require('../countryAccountMapper');
-const { Pool } = require('pg');
-
-const pool = new Pool({
-  connectionString: process.env.DATABASE_URL || 'postgresql://postgres:password@localhost:5432/meta_funnel_db'
-});
+const pool = require('../db');
 
 // GET /api/insights/overview
 router.get('/overview', async (req, res) => {
