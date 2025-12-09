@@ -1,0 +1,1100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Meta Funnel & Audience Insights Dashboard</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #0e1117;
+            color: #fafafa;
+            overflow-x: hidden;
+        }
+        
+        /* Sidebar */
+        .sidebar {
+            position: fixed;
+            left: 0;
+            top: 0;
+            width: 280px;
+            height: 100vh;
+            background: #262730;
+            padding: 20px;
+            overflow-y: auto;
+            border-right: 1px solid #333;
+            z-index: 1000;
+        }
+        
+        .sidebar .logo {
+            background: linear-gradient(135deg, #1f77b4 0%, #2ca02c 100%);
+            color: white;
+            padding: 15px;
+            text-align: center;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-size: 1.2rem;
+            font-weight: bold;
+        }
+        
+        .sidebar h3 {
+            color: #fafafa;
+            font-size: 0.9rem;
+            margin: 20px 0 10px 0;
+            border-bottom: 2px solid #1f77b4;
+            padding-bottom: 5px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .sidebar select,
+        .sidebar input {
+            width: 100%;
+            padding: 10px;
+            margin: 5px 0 15px 0;
+            background: #1e1e1e;
+            border: 1px solid #444;
+            color: #fafafa;
+            border-radius: 5px;
+            font-size: 0.9rem;
+        }
+        
+        .sidebar select:focus,
+        .sidebar input:focus {
+            outline: none;
+            border-color: #1f77b4;
+        }
+        
+        .sidebar button {
+            width: 100%;
+            padding: 12px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 10px 0;
+            font-size: 1rem;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+        
+        .btn-primary {
+            background: #1f77b4;
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background: #1557a0;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(31, 119, 180, 0.3);
+        }
+        
+        .btn-secondary {
+            background: #444;
+            color: white;
+        }
+        
+        .btn-secondary:hover {
+            background: #555;
+        }
+
+        .btn-fetch {
+            background: linear-gradient(135deg, #2ca02c 0%, #1f77b4 100%);
+            color: white;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn-fetch:hover {
+            background: linear-gradient(135deg, #238b23 0%, #1557a0 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(44, 160, 44, 0.4);
+        }
+
+        .btn-fetch:active {
+            transform: translateY(0);
+        }
+
+        .btn-fetch.fetching {
+            background: #666;
+            cursor: not-allowed;
+        }
+
+        .btn-fetch .spinner {
+            display: none;
+            width: 16px;
+            height: 16px;
+            border: 2px solid #fff;
+            border-top-color: transparent;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-right: 8px;
+            vertical-align: middle;
+        }
+
+        .btn-fetch.fetching .spinner {
+            display: inline-block;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        .sidebar-footer {
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #333;
+            text-align: center;
+            font-size: 0.85rem;
+            color: #999;
+        }
+
+        .sync-status {
+            background: #1e1e1e;
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+            border-left: 3px solid #2ca02c;
+        }
+
+        .sync-status .status-label {
+            font-size: 0.8rem;
+            color: #999;
+            margin-bottom: 5px;
+        }
+
+        .sync-status .status-value {
+            font-size: 0.9rem;
+            color: #2ca02c;
+            font-weight: 600;
+        }
+        
+        /* Main Content */
+        .main-content {
+            margin-left: 300px;
+            padding: 20px;
+            min-height: 100vh;
+        }
+        
+        /* Tabs */
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #333;
+            flex-wrap: wrap;
+        }
+        
+        .tab {
+            padding: 15px 25px;
+            background: #262730;
+            border: none;
+            color: #fafafa;
+            cursor: pointer;
+            border-radius: 5px 5px 0 0;
+            font-size: 1rem;
+            transition: all 0.3s;
+            font-weight: 500;
+        }
+        
+        .tab:hover {
+            background: #333;
+        }
+        
+        .tab.active {
+            background: #1f77b4;
+            color: white;
+        }
+        
+        /* Sub-tabs */
+        .sub-tabs {
+            display: flex;
+            gap: 10px;
+            margin: 20px 0;
+            border-bottom: 1px solid #333;
+        }
+        
+        .sub-tab {
+            padding: 10px 20px;
+            background: transparent;
+            border: none;
+            color: #999;
+            cursor: pointer;
+            border-radius: 5px 5px 0 0;
+            font-size: 0.9rem;
+            transition: all 0.3s;
+        }
+        
+        .sub-tab:hover {
+            color: #fafafa;
+            background: #262730;
+        }
+        
+        .sub-tab.active {
+            color: #1f77b4;
+            border-bottom: 2px solid #1f77b4;
+        }
+        
+        /* Tab Content */
+        .tab-content {
+            animation: fadeIn 0.3s;
+        }
+        
+        .sub-tab-content {
+            animation: fadeIn 0.3s;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        /* Loading Overlay */
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(14, 17, 23, 0.95);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+        }
+        
+        .spinner-large {
+            width: 60px;
+            height: 60px;
+            border: 6px solid #333;
+            border-top-color: #1f77b4;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        
+        .loading-overlay p {
+            margin-top: 20px;
+            font-size: 1.1rem;
+            color: #fafafa;
+        }
+
+        .loading-overlay .loading-details {
+            margin-top: 10px;
+            font-size: 0.9rem;
+            color: #999;
+        }
+        
+        /* KPI Cards */
+        .kpi-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .kpi-card {
+            background: linear-gradient(135deg, #262730 0%, #1e1e1e 100%);
+            padding: 25px;
+            border-radius: 10px;
+            border-left: 5px solid #1f77b4;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+        
+        .kpi-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.4);
+        }
+        
+        .kpi-card .label {
+            font-size: 0.9rem;
+            color: #999;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .kpi-card .value {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #1f77b4;
+            margin-bottom: 5px;
+        }
+        
+        .kpi-card .delta {
+            font-size: 0.85rem;
+            color: #2ca02c;
+        }
+        
+        .kpi-card .delta.negative {
+            color: #d62728;
+        }
+        
+        /* Charts */
+        .chart-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .chart-container {
+            background: #262730;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+        }
+        
+        .chart-container h3 {
+            margin-bottom: 15px;
+            color: #fafafa;
+            border-bottom: 2px solid #1f77b4;
+            padding-bottom: 10px;
+            font-size: 1.1rem;
+        }
+        
+        .chart-placeholder {
+            height: 300px;
+            background: linear-gradient(135deg, #1e1e1e 0%, #262730 100%);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 1px solid #333;
+            color: #666;
+            font-size: 0.9rem;
+        }
+        
+        /* Tables */
+        .table-container {
+            background: #262730;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+            overflow-x: auto;
+            margin-bottom: 30px;
+        }
+        
+        .table-container h3 {
+            margin-bottom: 15px;
+            color: #fafafa;
+            border-bottom: 2px solid #1f77b4;
+            padding-bottom: 10px;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 800px;
+        }
+        
+        thead {
+            background: #1e1e1e;
+        }
+        
+        th {
+            padding: 15px;
+            text-align: left;
+            color: #1f77b4;
+            font-weight: 600;
+            text-transform: uppercase;
+            font-size: 0.85rem;
+            letter-spacing: 0.5px;
+            cursor: pointer;
+            user-select: none;
+        }
+        
+        th:hover {
+            background: #252525;
+        }
+        
+        tbody tr {
+            border-bottom: 1px solid #333;
+            transition: background 0.2s;
+        }
+        
+        tbody tr:hover {
+            background: #2a2a2a;
+        }
+        
+        tbody tr:nth-child(even) {
+            background: #1e1e1e;
+        }
+        
+        tbody tr:nth-child(even):hover {
+            background: #2a2a2a;
+        }
+        
+        td {
+            padding: 15px;
+            color: #fafafa;
+            font-size: 0.9rem;
+        }
+        
+        /* Alerts */
+        .alert {
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            border-left: 5px solid;
+            animation: slideIn 0.3s;
+        }
+        
+        @keyframes slideIn {
+            from { 
+                opacity: 0;
+                transform: translateX(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+        
+        .alert.good {
+            background: rgba(44, 160, 44, 0.1);
+            border-left-color: #2ca02c;
+        }
+        
+        .alert.warning {
+            background: rgba(255, 127, 14, 0.1);
+            border-left-color: #ff7f0e;
+        }
+        
+        .alert.critical {
+            background: rgba(214, 39, 40, 0.1);
+            border-left-color: #d62728;
+        }
+        
+        .alert-title {
+            font-weight: bold;
+            margin-bottom: 10px;
+            font-size: 1.05rem;
+        }
+
+        /* Fetch Modal */
+        .fetch-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 10000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .fetch-modal.active {
+            display: flex;
+        }
+
+        .fetch-modal-content {
+            background: #262730;
+            padding: 30px;
+            border-radius: 10px;
+            max-width: 500px;
+            width: 90%;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+        }
+
+        .fetch-modal h2 {
+            color: #1f77b4;
+            margin-bottom: 20px;
+            font-size: 1.5rem;
+        }
+
+        .fetch-progress {
+            background: #1e1e1e;
+            border-radius: 10px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+
+        .progress-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin: 10px 0;
+            padding: 10px;
+            background: #262730;
+            border-radius: 5px;
+        }
+
+        .progress-item .status {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .progress-item .icon {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.8rem;
+        }
+
+        .progress-item .icon.pending {
+            background: #666;
+            color: #999;
+        }
+
+        .progress-item .icon.processing {
+            background: #1f77b4;
+            color: white;
+        }
+
+        .progress-item .icon.complete {
+            background: #2ca02c;
+            color: white;
+        }
+
+        .progress-item .icon.error {
+            background: #d62728;
+            color: white;
+        }
+
+        .fetch-modal-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .fetch-modal-actions button {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 600;
+        }
+        
+        /* Responsive */
+        @media (max-width: 1400px) {
+            .chart-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        @media (max-width: 1024px) {
+            .sidebar {
+                transform: translateX(-100%);
+                transition: transform 0.3s;
+            }
+            
+            .sidebar.mobile-open {
+                transform: translateX(0);
+            }
+            
+            .main-content {
+                margin-left: 0;
+            }
+            
+            .kpi-grid {
+                grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .tabs {
+                flex-direction: column;
+            }
+            
+            .tab {
+                width: 100%;
+                border-radius: 5px;
+                margin-bottom: 5px;
+            }
+            
+            .kpi-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .chart-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        /* Scrollbar */
+        ::-webkit-scrollbar {
+            width: 10px;
+            height: 10px;
+        }
+        
+        ::-webkit-scrollbar-track {
+            background: #1e1e1e;
+        }
+        
+        ::-webkit-scrollbar-thumb {
+            background: #444;
+            border-radius: 5px;
+        }
+        
+        ::-webkit-scrollbar-thumb:hover {
+            background: #555;
+        }
+    </style>
+</head>
+<body>
+    <!-- Sidebar with Filters -->
+    <div class="sidebar">
+        <div class="logo">Meta Funnel Insights</div>
+        
+        <h3>🌍 Country</h3>
+        <select id="countryFilter" class="filter-select">
+            <option value="All">All Countries</option>
+            <option value="KSA">🇸🇦 Saudi Arabia</option>
+            <option value="Kuwait">🇰🇼 Kuwait</option>
+            <option value="Qatar">🇶🇦 Qatar</option>
+        </select>
+        
+        <h3>📊 Ad Account</h3>
+        <select id="accountFilter" class="filter-select">
+            <option value="All">All Accounts</option>
+            <option value="act_123456">KSA Main Account</option>
+            <option value="act_789012">Kuwait Main Account</option>
+            <option value="act_345678">Qatar Main Account</option>
+        </select>
+        
+        <h3>📅 Date Range</h3>
+        <select id="datePreset" class="filter-select">
+            <option value="last_7_days">Last 7 Days</option>
+            <option value="last_30_days" selected>Last 30 Days</option>
+            <option value="this_month">This Month</option>
+            <option value="last_month">Last Month</option>
+            <option value="custom">Custom Range</option>
+        </select>
+        
+        <div id="customDateRange" style="display: none;">
+            <input type="date" id="dateFrom" class="date-input">
+            <input type="date" id="dateTo" class="date-input">
+        </div>
+        
+        <h3>🎯 Campaign Goal</h3>
+        <select id="campaignGoalFilter" class="filter-select">
+            <option value="All">All Goals</option>
+            <option value="awareness">Awareness</option>
+            <option value="traffic">Traffic</option>
+            <option value="consideration">Consideration</option>
+            <option value="leads">Leads</option>
+            <option value="sales">Sales</option>
+            <option value="app_installs">App Installs</option>
+        </select>
+        
+        <h3>📈 Funnel Stage</h3>
+        <select id="funnelStageFilter" class="filter-select">
+            <option value="All">All Stages</option>
+            <option value="TOF">TOF (Awareness)</option>
+            <option value="MOF">MOF (Consideration)</option>
+            <option value="BOF">BOF (Conversion)</option>
+        </select>
+
+        <hr style="border: 1px solid #333; margin: 20px 0;">
+        
+        <button id="applyFilters" class="btn-primary">🔄 Apply Filters</button>
+        <button id="refreshData" class="btn-secondary">♻️ Refresh Dashboard</button>
+        <button id="fetchFromMeta" class="btn-fetch">
+            <span class="spinner"></span>
+            <span class="btn-text">📥 Fetch from Meta API</span>
+        </button>
+        <button id="exportData" class="btn-secondary">📤 Export CSV</button>
+
+        <div class="sync-status">
+            <div class="status-label">Last Data Sync:</div>
+            <div class="status-value" id="lastSyncTime">Never</div>
+        </div>
+        
+        <div class="sidebar-footer">
+            <p>🚀 Built by <strong style="color: #1f77b4;">al-ai.ai</strong></p>
+            <p style="margin-top: 10px; font-size: 0.8rem;">
+                Dashboard v2.0<br>
+                Last Updated: <span id="lastUpdated">--:--</span>
+            </p>
+        </div>
+    </div>
+    
+    <!-- Main Content -->
+    <div class="main-content">
+        <!-- Tabs -->
+        <div class="tabs">
+            <button class="tab active" data-tab="overview">📊 Overview</button>
+            <button class="tab" data-tab="tof">🎯 TOF (Awareness)</button>
+            <button class="tab" data-tab="mof">🔍 MOF (Consideration)</button>
+            <button class="tab" data-tab="bof">💰 BOF (Conversion)</button>
+            <button class="tab" data-tab="audience">👥 Audience Insights</button>
+        </div>
+        
+        <!-- Loading Overlay -->
+        <div id="loadingOverlay" class="loading-overlay" style="display: none;">
+            <div class="spinner-large"></div>
+            <p>Loading dashboard data...</p>
+            <div class="loading-details">This may take a few seconds</div>
+        </div>
+
+        <!-- Fetch Progress Modal -->
+        <div id="fetchModal" class="fetch-modal">
+            <div class="fetch-modal-content">
+                <h2>📥 Fetching Data from Meta API</h2>
+                <p style="color: #999; margin-bottom: 20px;">
+                    Syncing campaign and audience data from your Meta ad accounts...
+                </p>
+
+                <div class="fetch-progress">
+                    <div class="progress-item">
+                        <div class="status">
+                            <div class="icon pending" id="icon-ksa">⏳</div>
+                            <span>KSA Account</span>
+                        </div>
+                        <span style="color: #999;" id="status-ksa">Pending</span>
+                    </div>
+
+                    <div class="progress-item">
+                        <div class="status">
+                            <div class="icon pending" id="icon-kuwait">⏳</div>
+                            <span>Kuwait Account</span>
+                        </div>
+                        <span style="color: #999;" id="status-kuwait">Pending</span>
+                    </div>
+
+                    <div class="progress-item">
+                        <div class="status">
+                            <div class="icon pending" id="icon-qatar">⏳</div>
+                            <span>Qatar Account</span>
+                        </div>
+                        <span style="color: #999;" id="status-qatar">Pending</span>
+                    </div>
+
+                    <div class="progress-item">
+                        <div class="status">
+                            <div class="icon pending" id="icon-audience">⏳</div>
+                            <span>Audience Insights</span>
+                        </div>
+                        <span style="color: #999;" id="status-audience">Pending</span>
+                    </div>
+                </div>
+
+                <div class="fetch-modal-actions">
+                    <button class="btn-secondary" id="cancelFetch" disabled>Cancel</button>
+                    <button class="btn-primary" id="closeFetch" style="display: none;">Close</button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Overview Tab -->
+        <div id="overview" class="tab-content active">
+            <!-- KPI Cards -->
+            <div class="kpi-grid">
+                <div class="kpi-card">
+                    <div class="label">💰 Total Spend</div>
+                    <div class="value" id="kpi-spend">$342,580.50</div>
+                    <div class="delta" id="delta-spend">+12.4% vs last period</div>
+                </div>
+                
+                <div class="kpi-card">
+                    <div class="label">💵 Total Revenue</div>
+                    <div class="value" id="kpi-revenue">$892,450.80</div>
+                    <div class="delta" id="delta-revenue">+18.7% vs last period</div>
+                </div>
+                
+                <div class="kpi-card">
+                    <div class="label">📊 ROAS</div>
+                    <div class="value" id="kpi-roas">2.61x</div>
+                    <div class="delta" id="delta-roas">+0.35x vs target</div>
+                </div>
+                
+                <div class="kpi-card">
+                    <div class="label">🎯 Conversions</div>
+                    <div class="value" id="kpi-conversions">4,832</div>
+                    <div class="delta" id="delta-conversions">+15.2% vs last period</div>
+                </div>
+                
+                <div class="kpi-card">
+                    <div class="label">💳 CPA</div>
+                    <div class="value" id="kpi-cpa">$70.89</div>
+                    <div class="delta negative" id="delta-cpa">-$5.12 improvement</div>
+                </div>
+                
+                <div class="kpi-card">
+                    <div class="label">👆 CTR</div>
+                    <div class="value" id="kpi-ctr">2.84%</div>
+                    <div class="delta" id="delta-ctr">+0.38% vs last period</div>
+                </div>
+                
+                <div class="kpi-card">
+                    <div class="label">📺 Impressions</div>
+                    <div class="value" id="kpi-impressions">12.4M</div>
+                    <div class="delta" id="delta-impressions">+22.1% vs last period</div>
+                </div>
+                
+                <div class="kpi-card">
+                    <div class="label">👥 Reach</div>
+                    <div class="value" id="kpi-reach">8.7M</div>
+                    <div class="delta" id="delta-reach">+18.9% vs last period</div>
+                </div>
+            </div>
+            
+            <hr style="border: 1px solid #333; margin: 30px 0;">
+            
+            <!-- Funnel Summary -->
+            <h2 style="margin-bottom: 20px; color: #fafafa;">📊 Funnel Performance Summary</h2>
+            <div class="chart-grid">
+                <div class="chart-container">
+                    <h3>💰 Spend by Funnel Stage</h3>
+                    <div class="chart-placeholder">
+                        Chart: Bar chart showing spend distribution across TOF/MOF/BOF
+                    </div>
+                </div>
+                
+                <div class="chart-container">
+                    <h3>📈 ROAS by Funnel Stage</h3>
+                    <div class="chart-placeholder">
+                        Chart: Bar chart comparing ROAS across funnel stages
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Country Comparison -->
+            <div id="countryComparisonSection">
+                <h2 style="margin: 30px 0 20px 0; color: #fafafa;">🌍 Country Comparison</h2>
+                <div class="table-container">
+                    <table id="countryComparisonTable">
+                        <thead>
+                            <tr>
+                                <th>Country</th>
+                                <th>Spend</th>
+                                <th>Revenue</th>
+                                <th>ROAS</th>
+                                <th>CPA</th>
+                                <th>Conversions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>🇸🇦 Saudi Arabia</td>
+                                <td>$185,250.00</td>
+                                <td>$482,150.00</td>
+                                <td style="color: #2ca02c; font-weight: bold;">2.60x</td>
+                                <td>$68.50</td>
+                                <td>2,704</td>
+                            </tr>
+                            <tr>
+                                <td>🇰🇼 Kuwait</td>
+                                <td>$95,430.50</td>
+                                <td>$268,205.30</td>
+                                <td style="color: #2ca02c; font-weight: bold;">2.81x</td>
+                                <td>$72.10</td>
+                                <td>1,324</td>
+                            </tr>
+                            <tr>
+                                <td>🇶🇦 Qatar</td>
+                                <td>$61,900.00</td>
+                                <td>$142,095.50</td>
+                                <td style="color: #ff7f0e; font-weight: bold;">2.30x</td>
+                                <td>$76.85</td>
+                                <td>805</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Alerts Section -->
+            <div style="margin-top: 30px;">
+                <h2 style="margin-bottom: 20px; color: #fafafa;">🚨 Performance Alerts</h2>
+                
+                <div class="alert good">
+                    <div class="alert-title">🟢 5 High-Performance Campaigns Identified</div>
+                    <div>Excellent ROAS (avg 3.15x) and efficient CPA ($68.42)</div>
+                    <div style="margin-top: 5px; font-size: 0.9rem; color: #999;">
+                        <strong>Recommendation:</strong> Scale these campaigns by 30-50%
+                    </div>
+                </div>
+                
+                <div class="alert warning">
+                    <div class="alert-title">🟡 High CPA Detected in 3 Campaigns</div>
+                    <div>CPA is 40% above average ($70.89). Affecting $45,200 in spend.</div>
+                    <div style="margin-top: 5px; font-size: 0.9rem; color: #999;">
+                        <strong>Recommendation:</strong> Optimize landing pages, refine targeting
+                    </div>
+                </div>
+                
+                <div class="alert critical">
+                    <div class="alert-title">🔴 2 Campaigns Below Target ROAS</div>
+                    <div>Campaigns with ROAS below 2.0x. Total spend: $18,450</div>
+                    <div style="margin-top: 5px; font-size: 0.9rem; color: #999;">
+                        <strong>Recommendation:</strong> Pause lowest performers immediately
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- TOF Tab -->
+        <div id="tof" class="tab-content" style="display: none;">
+            <h2 style="margin-bottom: 20px; color: #fafafa;">🎯 Top of Funnel (Awareness)</h2>
+            
+            <!-- TOF KPIs -->
+            <div class="kpi-grid">
+                <div class="kpi-card">
+                    <div class="label">👥 Total Reach</div>
+                    <div class="value">8.7M</div>
+                </div>
+                
+                <div class="kpi-card">
+                    <div class="label">📺 Impressions</div>
+                    <div class="value">12.4M</div>
+                </div>
+                
+                <div class="kpi-card">
+                    <div class="label">🔄 Frequency</div>
+                    <div class="value">1.42</div>
+                </div>
+                
+                <div class="kpi-card">
+                    <div class="label">💵 CPM</div>
+                    <div class="value">$8.25</div>
+                </div>
+                
+                <div class="kpi-card">
+                    <div class="label">👆 CTR</div>
+                    <div class="value">2.84%</div>
+                </div>
+                
+                <div class="kpi-card">
+                    <div class="label">🎬 Video Views</div>
+                    <div class="value">3.2M</div>
+                </div>
+            </div>
+            
+            <hr style="border: 1px solid #333; margin: 30px 0;">
+            
+            <!-- TOF Campaigns Table -->
+            <div class="table-container">
+                <h3 style="margin-bottom: 15px;">📋 TOF Campaign Performance</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Campaign Name ↕</th>
+                            <th>Spend ↕</th>
+                            <th>Impressions ↕</th>
+                            <th>Reach ↕</th>
+                            <th>CPM ↕</th>
+                            <th>CTR ↕</th>
+                            <th>LPV ↕</th>
+                            <th>ThruPlays ↕</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>FB_Awareness_KSA_Feed_001</td>
+                            <td>$45,200.00</td>
+                            <td>5.2M</td>
+                            <td>3.8M</td>
+                            <td>$8.69</td>
+                            <td>3.1%</td>
+                            <td>161,200</td>
+                            <td>1.2M</td>
+                        </tr>
+                        <tr>
+                            <td>IG_Stories_Kuwait_Video_023</td>
+                            <td>$32,800.00</td>
+                            <td>4.1M</td>
+                            <td>2.9M</td>
+                            <td>$8.00</td>
+                            <td>2.8%</td>
+                            <td>114,800</td>
+                            <td>985,000</td>
+                        </tr>
+                        <tr>
+                            <td>FB_Reach_Qatar_Carousel_045</td>
+                            <td>$28,500.00</td>
+                            <td>3.1M</td>
+                            <td>2.0M</td>
+                            <td>$9.19</td>
+                            <td>2.4%</td>
+                            <td>74,400</td>
+                            <td>-</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        
+        <!-- MOF Tab -->
+        <div id="mof" class="tab-content" style="display: none;">
+            <h2 style="margin-bottom: 20px; color: #fafafa;">🔍 Middle of Funnel (Consideration)</h2>
+            
+            <!-- MOF KPIs -->
+            <div class="kpi-grid">
+                <div class="kpi-card">
+                    <div class="label">📄 Landing Page Views</div>
+                    <div class="value">452,800</div>
+                </div>
+                
+                <div class="kpi-card">
+                    <div class="label">💵 Cost per LPV</div>
+                    <div class="value">$0.82</div>
+                </div>
+                
+                <div class="kpi-card">
+                    <div class="label">🛒 Add to Cart</div>
+                    <div class="value">18,450</div>
+                </div>
+                
+                <div class="kpi-card">
+                    <div class="label">💵 Cost per ATC</div>
+                    <div class="value">$12.45</div>
+                </div>
+                
+                <div class="kpi-card">
+                    <div class="label">📋 Leads</div>
+                    <div class="value">2,340</div>
+                </div>
+                
+                <div class="kpi-card">
+                    <div class="label">💵 CPL</div>
+                    <div class="value">$45.67</div>
+                </div>
+            </div>
+            
+            <hr style="border: 1px solid #333; margin: 30px 0;">
+            
+            <!-- MOF Campaigns Table -->
+            <div class="table-container">
+                <h3 style="margin-bottom: 15px;">📋 MOF Campaign Performance</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Campaign Name ↕</th>
+                            <th>Spend ↕</th>
+                            <th>LPV ↕</th>
+                            <th>Cost/LPV ↕</th>
+                            <th>ATC ↕</th>
+                            <th>Cost/ATC ↕</th>
+                            <th>Leads ↕</th>
+                            <th>CPL ↕</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>FB_Traffic_KSA_Retarget_078</td>
+                            <td>$38,900.00</td>
+                            <td>185,200</td>
+                            <td>$0.21</td>
+                            <td>7,890</td>
+                            <td>$4.93</td>
+                            <td>-</td>
+                            <td>-</td>
+                        </tr>
+                        <tr>
+                            <td>IG_LeadGen_Kuwait_Form_034</td>

@@ -1,0 +1,153 @@
+// js/app.js
+
+class DashboardManager {
+    constructor() {
+        this.currentTab = 'overview';
+        this.currentSubTab = 'demographics';
+    }
+
+    async initialize() {
+        // Initialize filters
+        await filterManager.initialize();
+        
+        // Set up tab switching
+        this._setupTabSwitching();
+        
+        // Load initial data
+        await this.loadCurrentTab();
+        
+        // Update last updated time
+        this._updateLastUpdatedTime();
+    }
+
+    _setupTabSwitching() {
+        // Main tabs
+        document.querySelectorAll('.tab').forEach(tab => {
+            tab.addEventListener('click', (e) => {
+                const tabName = e.target.dataset.tab;
+                this.switchTab(tabName);
+            });
+        });
+
+        // Sub tabs (audience)
+        document.querySelectorAll('.sub-tab').forEach(subTab => {
+            subTab.addEventListener('click', (e) => {
+                const subTabName = e.target.dataset.subtab;
+                this.switchSubTab(subTabName);
+            });
+        });
+    }
+
+    switchTab(tabName) {
+        // Hide all tab contents
+        document.querySelectorAll('.tab-content').forEach(content => {
+            content.style.display = 'none';
+        });
+
+        // Remove active class from all tabs
+        document.querySelectorAll('.tab').forEach(tab => {
+            tab.classList.remove('active');
+        });
+
+        // Show selected tab
+        document.getElementById(tabName).style.display = 'block';
+        document.querySelector(`[data-tab="${tabName}"]`).classList.add('active');
+
+        this.currentTab = tabName;
+        this.loadCurrentTab();
+    }
+
+    switchSubTab(subTabName) {
+        // Hide all sub-tab contents
+        document.querySelectorAll('.sub-tab-content').forEach(content => {
+            content.style.display = 'none';
+        });
+
+        // Remove active class from all sub-tabs
+        document.querySelectorAll('.sub-tab').forEach(subTab => {
+            subTab.classList.remove('active');
+        });
+
+        // Show selected sub-tab
+        document.getElementById(subTabName).style.display = 'block';
+        document.querySelector(`[data-subtab="${subTabName}"]`).classList.add('active');
+
+        this.currentSubTab = subTabName;
+        this.loadAudienceSubTab(subTabName);
+    }
+
+    async loadCurrentTab() {
+        this._showLoading();
+
+        try {
+            const filters = filterManager.getFilters();
+
+            switch(this.currentTab) {
+                case 'overview':
+                    await overviewDashboard.load(filters);
+                    break;
+                case 'tof':
+                    await tofDashboard.load(filters);
+                    break;
+                case 'mof':
+                    await mofDashboard.load(filters);
+                    break;
+                case 'bof':
+                    await bofDashboard.load(filters);
+                    break;
+                case 'audience':
+                    await this.loadAudienceSubTab(this.currentSubTab);
+                    break;
+            }
+
+            this._updateLastUpdatedTime();
+        } catch (error) {
+            console.error('Error loading tab:', error);
+            alert('Failed to load dashboard data. Please check your connection.');
+        } finally {
+            this._hideLoading();
+        }
+    }
+
+    async loadAudienceSubTab(subTabName) {
+        const filters = filterManager.getFilters();
+
+        switch(subTabName) {
+            case 'demographics':
+                await audienceDashboard.loadDemographics(filters);
+                break;
+            case 'location':
+                await audienceDashboard.loadLocation(filters);
+                break;
+            case 'device':
+                await audienceDashboard.loadDevice(filters);
+                break;
+            case 'platform':
+                await audienceDashboard.loadPlatform(filters);
+                break;
+        }
+    }
+
+    _showLoading() {
+        document.getElementById('loadingOverlay').style.display = 'flex';
+    }
+
+    _hideLoading() {
+        document.getElementById('loadingOverlay').style.display = 'none';
+    }
+
+    _updateLastUpdatedTime() {
+        const now = new Date();
+        const timeString = now.toLocaleTimeString('en-US', { 
+            hour: '2-digit', 
+            minute: '2-digit' 
+        });
+        document.getElementById('lastUpdated').textContent = timeString;
+    }
+}
+
+// Initialize app when DOM is ready
+document.addEventListener('DOMContentLoaded', async () => {
+    window.dashboardManager = new DashboardManager();
+    await window.dashboardManager.initialize();
+});

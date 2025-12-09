@@ -1,0 +1,1529 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Audience Insights Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #0e1117;
+            color: #fafafa;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #9467bd 0%, #1f77b4 100%);
+            padding: 30px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+        
+        .header h1 {
+            font-size: 2.5rem;
+            color: white;
+            margin-bottom: 10px;
+        }
+        
+        .header p {
+            color: rgba(255,255,255,0.9);
+            font-size: 1.1rem;
+        }
+        
+        .filters {
+            background: #262730;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .filter-group {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .filter-group label {
+            font-size: 0.85rem;
+            color: #999;
+            text-transform: uppercase;
+        }
+
+        .filter-group select {
+            padding: 10px;
+            background: #1e1e1e;
+            border: 1px solid #444;
+            color: #fafafa;
+            border-radius: 5px;
+            font-size: 0.9rem;
+        }
+
+        .btn-primary {
+            padding: 10px 20px;
+            background: #9467bd;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: 600;
+            margin-top: 20px;
+        }
+
+        .btn-primary:hover {
+            background: #7851a9;
+        }
+        
+        .sub-tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #333;
+            flex-wrap: wrap;
+        }
+        
+        .sub-tab {
+            padding: 12px 25px;
+            background: transparent;
+            border: none;
+            color: #999;
+            cursor: pointer;
+            border-radius: 5px 5px 0 0;
+            font-size: 1rem;
+            transition: all 0.3s;
+            font-weight: 500;
+        }
+        
+        .sub-tab:hover {
+            color: #fafafa;
+            background: #262730;
+        }
+        
+        .sub-tab.active {
+            color: #9467bd;
+            border-bottom: 3px solid #9467bd;
+            background: #1e1e1e;
+        }
+        
+        .tab-content {
+            display: none;
+            animation: fadeIn 0.3s;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .chart-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .chart-container {
+            background: #262730;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+        }
+        
+        .chart-container h3 {
+            margin-bottom: 15px;
+            color: #fafafa;
+            border-bottom: 2px solid #9467bd;
+            padding-bottom: 10px;
+        }
+        
+        .table-container {
+            background: #262730;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+            overflow-x: auto;
+            margin-bottom: 30px;
+        }
+        
+        .table-container h3 {
+            margin-bottom: 15px;
+            color: #fafafa;
+            border-bottom: 2px solid #9467bd;
+            padding-bottom: 10px;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 1000px;
+        }
+        
+        thead {
+            background: #1e1e1e;
+        }
+        
+        th {
+            padding: 15px;
+            text-align: left;
+            color: #9467bd;
+            font-weight: 600;
+            text-transform: uppercase;
+            font-size: 0.85rem;
+            cursor: pointer;
+        }
+        
+        th:hover {
+            background: #252525;
+        }
+        
+        tbody tr {
+            border-bottom: 1px solid #333;
+            transition: background 0.2s;
+        }
+        
+        tbody tr:hover {
+            background: #2a2a2a;
+        }
+        
+        tbody tr:nth-child(even) {
+            background: #1e1e1e;
+        }
+        
+        td {
+            padding: 15px;
+            color: #fafafa;
+            font-size: 0.9rem;
+        }
+        
+        .roas-excellent {
+            color: #2ca02c;
+            font-weight: 700;
+        }
+        
+        .roas-good {
+            color: #1f77b4;
+            font-weight: 600;
+        }
+        
+        .roas-warning {
+            color: #ff7f0e;
+            font-weight: 600;
+        }
+        
+        .roas-poor {
+            color: #d62728;
+            font-weight: 600;
+        }
+
+        .insights-card {
+            background: linear-gradient(135deg, rgba(148, 103, 189, 0.1) 0%, rgba(31, 119, 180, 0.1) 100%);
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+            border-left: 4px solid #9467bd;
+        }
+
+        .insights-card h3 {
+            color: #9467bd;
+            margin-bottom: 15px;
+            font-size: 1.3rem;
+        }
+
+        .insight-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+
+        .insight-item {
+            background: #262730;
+            padding: 15px;
+            border-radius: 8px;
+            border-left: 3px solid #9467bd;
+        }
+
+        .insight-label {
+            font-size: 0.85rem;
+            color: #999;
+            margin-bottom: 5px;
+        }
+
+        .insight-value {
+            font-size: 1.3rem;
+            font-weight: bold;
+            color: #9467bd;
+        }
+
+        .segment-badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            margin-left: 8px;
+        }
+
+        .badge-top {
+            background: linear-gradient(135deg, #2ca02c, #1f77b4);
+            color: white;
+        }
+
+        .badge-high {
+            background: #2ca02c;
+            color: white;
+        }
+
+        .badge-medium {
+            background: #1f77b4;
+            color: white;
+        }
+
+        .badge-low {
+            background: #ff7f0e;
+            color: white;
+        }
+
+        .heatmap-container {
+            background: #1e1e1e;
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+        }
+
+        .heatmap-row {
+            display: flex;
+            gap: 10px;
+            margin: 5px 0;
+        }
+
+        .heatmap-label {
+            width: 100px;
+            display: flex;
+            align-items: center;
+            color: #999;
+            font-size: 0.85rem;
+        }
+
+        .heatmap-cells {
+            display: flex;
+            gap: 5px;
+            flex: 1;
+        }
+
+        .heatmap-cell {
+            flex: 1;
+            height: 50px;
+            border-radius: 5px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.85rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .heatmap-cell:hover {
+            transform: scale(1.05);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+        }
+
+        .heat-high {
+            background: linear-gradient(135deg, #2ca02c 0%, #1f77b4 100%);
+            color: white;
+        }
+
+        .heat-medium {
+            background: linear-gradient(135deg, #1f77b4 0%, #ff7f0e 100%);
+            color: white;
+        }
+
+        .heat-low {
+            background: linear-gradient(135deg, #ff7f0e 0%, #d62728 100%);
+            color: white;
+        }
+
+        .device-comparison {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin: 20px 0;
+        }
+
+        .device-card {
+            background: #1e1e1e;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            border-top: 4px solid #9467bd;
+        }
+
+        .device-icon {
+            font-size: 3rem;
+            margin-bottom: 10px;
+        }
+
+        .device-name {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 15px;
+            color: #fafafa;
+        }
+
+        .device-metrics {
+            text-align: left;
+        }
+
+        .device-metric {
+            display: flex;
+            justify-content: space-between;
+            margin: 8px 0;
+            padding: 5px 0;
+            border-bottom: 1px solid #333;
+        }
+
+        .device-metric-label {
+            color: #999;
+            font-size: 0.85rem;
+        }
+
+        .device-metric-value {
+            color: #9467bd;
+            font-weight: 600;
+        }
+
+        @media (max-width: 768px) {
+            .chart-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .device-comparison {
+                grid-template-columns: 1fr;
+            }
+
+            .insight-row {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <h1>👥 Audience Insights Dashboard</h1>
+            <p>Deep Dive into Who's Driving Your Performance</p>
+        </div>
+
+        <!-- Filters -->
+        <div class="filters">
+            <div class="filter-group">
+                <label>Country</label>
+                <select id="countryFilter">
+                    <option value="All">All Countries</option>
+                    <option value="KSA">🇸🇦 Saudi Arabia</option>
+                    <option value="Kuwait">🇰🇼 Kuwait</option>
+                    <option value="Qatar">🇶🇦 Qatar</option>
+                </select>
+            </div>
+
+            <div class="filter-group">
+                <label>Date Range</label>
+                <select id="dateRange">
+                    <option value="7">Last 7 Days</option>
+                    <option value="30" selected>Last 30 Days</option>
+                    <option value="90">Last 90 Days</option>
+                </select>
+            </div>
+
+            <div class="filter-group">
+                <label>Campaign Goal</label>
+                <select id="campaignGoal">
+                    <option value="All">All Goals</option>
+                    <option value="awareness">Awareness</option>
+                    <option value="traffic">Traffic</option>
+                    <option value="leads">Leads</option>
+                    <option value="sales">Sales</option>
+                </select>
+            </div>
+
+            <div class="filter-group">
+                <label>Funnel Stage</label>
+                <select id="funnelStage">
+                    <option value="All">All Stages</option>
+                    <option value="TOF">TOF</option>
+                    <option value="MOF">MOF</option>
+                    <option value="BOF">BOF</option>
+                </select>
+            </div>
+
+            <button class="btn-primary" onclick="applyFilters()">Apply Filters</button>
+        </div>
+
+        <!-- Top Insights Card -->
+        <div class="insights-card">
+            <h3>🎯 Key Audience Insights</h3>
+            <div class="insight-row">
+                <div class="insight-item">
+                    <div class="insight-label">Best Performing Segment</div>
+                    <div class="insight-value">M 25-34, iOS</div>
+                </div>
+
+                <div class="insight-item">
+                    <div class="insight-label">Highest ROAS</div>
+                    <div class="insight-value">2.88x</div>
+                </div>
+
+                <div class="insight-item">
+                    <div class="insight-label">Most Efficient Location</div>
+                    <div class="insight-value">Kuwait City</div>
+                </div>
+
+                <div class="insight-item">
+                    <div class="insight-label">Top Platform</div>
+                    <div class="insight-value">Instagram Stories</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sub-tabs -->
+        <div class="sub-tabs">
+            <button class="sub-tab active" onclick="switchTab('demographics')">👤 Demographics</button>
+            <button class="sub-tab" onclick="switchTab('location')">🌍 Location</button>
+            <button class="sub-tab" onclick="switchTab('device')">📱 Device</button>
+            <button class="sub-tab" onclick="switchTab('platform')">📺 Platform</button>
+        </div>
+
+        <!-- Demographics Tab -->
+        <div id="demographics" class="tab-content active">
+            <h2 style="margin-bottom: 20px; color: #fafafa;">👤 Age & Gender Performance</h2>
+
+            <!-- Age x Gender Heatmap -->
+            <div class="chart-container">
+                <h3>🔥 Age × Gender ROAS Heatmap</h3>
+                <div class="heatmap-container">
+                    <div style="display: flex; margin-bottom: 10px;">
+                        <div style="width: 100px;"></div>
+                        <div style="flex: 1; display: flex; gap: 5px;">
+                            <div style="flex: 1; text-align: center; color: #999; font-size: 0.85rem;">Male</div>
+                            <div style="flex: 1; text-align: center; color: #999; font-size: 0.85rem;">Female</div>
+                            <div style="flex: 1; text-align: center; color: #999; font-size: 0.85rem;">Unknown</div>
+                        </div>
+                    </div>
+
+                    <div class="heatmap-row">
+                        <div class="heatmap-label">18-24</div>
+                        <div class="heatmap-cells">
+                            <div class="heatmap-cell heat-medium" title="Male 18-24: 2.16x ROAS">2.16x</div>
+                            <div class="heatmap-cell heat-medium" title="Female 18-24: 2.24x ROAS">2.24x</div>
+                            <div class="heatmap-cell heat-low" title="Unknown 18-24: 1.85x ROAS">1.85x</div>
+                        </div>
+                    </div>
+
+                    <div class="heatmap-row">
+                        <div class="heatmap-label">25-34</div>
+                        <div class="heatmap-cells">
+                            <div class="heatmap-cell heat-high" title="Male 25-34: 2.88x ROAS">2.88x ⭐</div>
+                            <div class="heatmap-cell heat-high" title="Female 25-34: 2.88x ROAS">2.88x ⭐</div>
+                            <div class="heatmap-cell heat-medium" title="Unknown 25-34: 2.42x ROAS">2.42x</div>
+                        </div>
+                    </div>
+
+                    <div class="heatmap-row">
+                        <div class="heatmap-label">35-44</div>
+                        <div class="heatmap-cells">
+                            <div class="heatmap-cell heat-high" title="Male 35-44: 2.75x ROAS">2.75x</div>
+                            <div class="heatmap-cell heat-high" title="Female 35-44: 2.61x ROAS">2.61x</div>
+                            <div class="heatmap-cell heat-medium" title="Unknown 35-44: 2.18x ROAS">2.18x</div>
+                        </div>
+                    </div>
+
+                    <div class="heatmap-row">
+                        <div class="heatmap-label">45-54</div>
+                        <div class="heatmap-cells">
+                            <div class="heatmap-cell heat-medium" title="Male 45-54: 2.35x ROAS">2.35x</div>
+                            <div class="heatmap-cell heat-medium" title="Female 45-54: 2.28x ROAS">2.28x</div>
+                            <div class="heatmap-cell heat-low" title="Unknown 45-54: 1.92x ROAS">1.92x</div>
+                        </div>
+                    </div>
+
+                    <div class="heatmap-row">
+                        <div class="heatmap-label">55-64</div>
+                        <div class="heatmap-cells">
+                            <div class="heatmap-cell heat-medium" title="Male 55-64: 2.12x ROAS">2.12x</div>
+                            <div class="heatmap-cell heat-medium" title="Female 55-64: 2.05x ROAS">2.05x</div>
+                            <div class="heatmap-cell heat-low" title="Unknown 55-64: 1.78x ROAS">1.78x</div>
+                        </div>
+                    </div>
+
+                    <div class="heatmap-row">
+                        <div class="heatmap-label">65+</div>
+                        <div class="heatmap-cells">
+                            <div class="heatmap-cell heat-low" title="Male 65+: 1.88x ROAS">1.88x</div>
+                            <div class="heatmap-cell heat-low" title="Female 65+: 1.82x ROAS">1.82x</div>
+                            <div class="heatmap-cell heat-low" title="Unknown 65+: 1.65x ROAS">1.65x</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Charts -->
+            <div class="chart-grid">
+                <div class="chart-container">
+                    <h3>📊 ROAS by Age Group</h3>
+                    <canvas id="ageRoasChart"></canvas>
+                </div>
+                
+                <div class="chart-container">
+                    <h3>👥 ROAS by Gender</h3>
+                    <canvas id="genderRoasChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Demographics Table -->
+            <div class="table-container">
+                <h3>📊 Age × Gender Performance Matrix</h3>
+                <table id="demographicsTable">
+                    <thead>
+                        <tr>
+                            <th onclick="sortTable('demographicsTable', 0)">Age ↕</th>
+                            <th onclick="sortTable('demographicsTable', 1)">Gender ↕</th>
+                            <th onclick="sortTable('demographicsTable', 2)">Spend ↕</th>
+                            <th onclick="sortTable('demographicsTable', 3)">Impressions ↕</th>
+                            <th onclick="sortTable('demographicsTable', 4)">CTR ↕</th>
+                            <th onclick="sortTable('demographicsTable', 5)">CPC ↕</th>
+                            <th onclick="sortTable('demographicsTable', 6)">Conversions ↕</th>
+                            <th onclick="sortTable('demographicsTable', 7)">CPA ↕</th>
+                            <th onclick="sortTable('demographicsTable', 8)">Revenue ↕</th>
+                            <th onclick="sortTable('demographicsTable', 9)">ROAS ↕</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>25-34</td>
+                            <td>Male</td>
+                            <td>$85,200.00</td>
+                            <td>3,248,000</td>
+                            <td>3.2%</td>
+                            <td>$0.82</td>
+                            <td>1,240</td>
+                            <td>$68.71</td>
+                            <td>$245,780.00</td>
+                            <td class="roas-excellent">2.88x <span class="segment-badge badge-top">⭐ Top</span></td>
+                        </tr>
+                        <tr>
+                            <td>25-34</td>
+                            <td>Female</td>
+                            <td>$72,400.00</td>
+                            <td>2,842,000</td>
+                            <td>2.9%</td>
+                            <td>$0.88</td>
+                            <td>1,085</td>
+                            <td>$66.73</td>
+                            <td>$208,252.00</td>
+                            <td class="roas-excellent">2.88x <span class="segment-badge badge-top">⭐ Top</span></td>
+                        </tr>
+                        <tr>
+                            <td>35-44</td>
+                            <td>Male</td>
+                            <td>$68,900.00</td>
+                            <td>2,485,000</td>
+                            <td>2.7%</td>
+                            <td>$0.95</td>
+                            <td>982</td>
+                            <td>$70.16</td>
+                            <td>$189,847.00</td>
+                            <td class="roas-excellent">2.75x <span class="segment-badge badge-high">High</span></td>
+                        </tr>
+                        <tr>
+                            <td>35-44</td>
+                            <td>Female</td>
+                            <td>$54,200.00</td>
+                            <td>1,942,000</td>
+                            <td>2.5%</td>
+                            <td>$1.02</td>
+                            <td>745</td>
+                            <td>$72.75</td>
+                            <td>$141,322.00</td>
+                            <td class="roas-excellent">2.61x <span class="segment-badge badge-high">High</span></td>
+                        </tr>
+                        <tr>
+                            <td>25-34</td>
+                            <td>Unknown</td>
+                            <td>$42,800.00</td>
+                            <td>1,685,000</td>
+                            <td>2.6%</td>
+                            <td>$0.97</td>
+                            <td>624</td>
+                            <td>$68.59</td>
+                            <td>$103,576.00</td>
+                            <td class="roas-good">2.42x <span class="segment-badge badge-medium">Medium</span></td>
+                        </tr>
+                        <tr>
+                            <td>45-54</td>
+                            <td>Male</td>
+                            <td>$38,500.00</td>
+                            <td>1,540,000</td>
+                            <td>2.3%</td>
+                            <td>$1.08</td>
+                            <td>548</td>
+                            <td>$70.26</td>
+                            <td>$90,475.00</td>
+                            <td class="roas-good">2.35x <span class="segment-badge badge-medium">Medium</span></td>
+                        </tr>
+                        <tr>
+                            <td>45-54</td>
+                            <td>Female</td>
+                            <td>$32,100.00</td>
+                            <td>1,324,000</td>
+                            <td>2.2%</td>
+                            <td>$1.10</td>
+                            <td>458</td>
+                            <td>$70.09</td>
+                            <td>$73,188.00</td>
+                            <td class="roas-good">2.28x <span class="segment-badge badge-medium">Medium</span></td>
+                        </tr>
+                        <tr>
+                            <td>18-24</td>
+                            <td>Female</td>
+                            <td>$28,600.00</td>
+                            <td>1,245,000</td>
+                            <td>2.6%</td>
+                            <td>$0.88</td>
+                            <td>385</td>
+                            <td>$74.29</td>
+                            <td>$64,064.00</td>
+                            <td class="roas-good">2.24x <span class="segment-badge badge-medium">Medium</span></td>
+                        </tr>
+                        <tr>
+                            <td>35-44</td>
+                            <td>Unknown</td>
+                            <td>$24,800.00</td>
+                            <td>1,085,000</td>
+                            <td>2.4%</td>
+                            <td>$0.93</td>
+                            <td>348</td>
+                            <td>$71.26</td>
+                            <td>$54,064.00</td>
+                            <td class="roas-good">2.18x <span class="segment-badge badge-medium">Medium</span></td>
+                        </tr>
+                        <tr>
+                            <td>18-24</td>
+                            <td>Male</td>
+                            <td>$32,100.00</td>
+                            <td>1,540,000</td>
+                            <td>2.8%</td>
+                            <td>$0.75</td>
+                            <td>420</td>
+                            <td>$76.43</td>
+                            <td>$69,372.00</td>
+                            <td class="roas-good">2.16x <span class="segment-badge badge-low">Low</span></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Location Tab -->
+        <div id="location" class="tab-content">
+            <h2 style="margin-bottom: 20px; color: #fafafa;">🌍 Geographic Performance</h2>
+
+            <!-- Charts -->
+            <div class="chart-grid">
+                <div class="chart-container">
+                    <h3>🗺️ Spend by Location</h3>
+                    <canvas id="locationSpendChart"></canvas>
+                </div>
+                
+                <div class="chart-container">
+                    <h3>📊 ROAS by City</h3>
+                    <canvas id="locationRoasChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Location Table -->
+            <div class="table-container">
+                <h3>📍 Top Performing Cities</h3>
+                <table id="locationTable">
+                    <thead>
+                        <tr>
+                            <th onclick="sortTable('locationTable', 0)">Country ↕</th>
+                            <th onclick="sortTable('locationTable', 1)">City ↕</th>
+                            <th onclick="sortTable('locationTable', 2)">Spend ↕</th>
+                            <th onclick="sortTable('locationTable', 3)">Impressions ↕</th>
+                            <th onclick="sortTable('locationTable', 4)">CTR ↕</th>
+                            <th onclick="sortTable('locationTable', 5)">CPC ↕</th>
+                            <th onclick="sortTable('locationTable', 6)">Conversions ↕</th>
+                            <th onclick="sortTable('locationTable', 7)">CPA ↕</th>
+                            <th onclick="sortTable('locationTable', 8)">Revenue ↕</th>
+                            <th onclick="sortTable('locationTable', 9)">ROAS ↕</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>🇰🇼 Kuwait</td>
+                            <td>Kuwait City</td>
+                            <td>$78,400.00</td>
+                            <td>2,948,000</td>
+                            <td>3.1%</td>
+                            <td>$0.78</td>
+                            <td>1,105</td>
+                            <td>$70.95</td>
+                            <td>$223,936.00</td>
+                            <td class="roas-excellent">2.86x <span class="segment-badge badge-top">⭐ Top</span></td>
+                        </tr>
+                        <tr>
+                            <td>🇸🇦 Saudi Arabia</td>
+                            <td>Riyadh</td>
+                            <td>$95,200.00</td>
+                            <td>3,842,000</td>
+                            <td>2.9%</td>
+                            <td>$0.85</td>
+                            <td>1,420</td>
+                            <td>$67.04</td>
+                            <td>$256,390.00</td>
+                            <td class="roas-excellent">2.69x <span class="segment-badge badge-high">High</span></td>
+                        </tr>
+                        <tr>
+                            <td>🇸🇦 Saudi Arabia</td>
+                            <td>Jeddah</td>
+                            <td>$62,800.00</td>
+                            <td>2,548,000</td>
+                            <td>2.7%</td>
+                            <td>$0.92</td>
+                            <td>890</td>
+                            <td>$70.56</td>
+                            <td>$163,544.00</td>
+                            <td class="roas-excellent">2.60x <span class="segment-badge badge-high">High</span></td>
+                        </tr>
+                        <tr>
+                            <td>🇶🇦 Qatar</td>
+                            <td>Doha</td>
+                            <td>$54,900.00</td>
+                            <td>2,145,000</td>
+                            <td>2.5%</td>
+                            <td>$1.02</td>
+                            <td>748</td>
+                            <td>$73.40</td>
+                            <td>$126,270.00</td>
+                            <td class="roas-good">2.30x <span class="segment-badge badge-medium">Medium</span></td>
+                        </tr>
+                        <tr>
+                            <td>🇸🇦 Saudi Arabia</td>
+                            <td>Dammam</td>
+                            <td>$18,500.00</td>
+                            <td>842,000</td>
+                            <td>2.4%</td>
+                            <td>$0.87</td>
+                            <td>268</td>
+                            <td>$69.03</td>
+                            <td>$41,810.00</td>
+                            <td class="roas-good">2.26x <span class="segment-badge badge-medium">Medium</span></td>
+                        </tr>
+                        <tr>
+                            <td>🇰🇼 Kuwait</td>
+                            <td>Al Ahmadi</td>
+                            <td>$12,800.00</td>
+                            <td>585,000</td>
+                            <td>2.6%</td>
+                            <td>$0.84</td>
+                            <td>182</td>
+                            <td>$70.33</td>
+                            <td>$28,672.00</td>
+                            <td class="roas-good">2.24x <span class="segment-badge badge-medium">Medium</span></td>
+                        </tr>
+                        <tr>
+                            <td>🇸🇦 Saudi Arabia</td>
+                            <td>Mecca</td>
+                            <td>$9,400.00</td>
+                            <td>425,000</td>
+                            <td>2.3%</td>
+                            <td>$0.96</td>
+                            <td>134</td>
+                            <td>$70.15</td>
+                            <td>$20,680.00</td>
+                            <td class="roas-good">2.20x <span class="segment-badge badge-medium">Medium</span></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Device Tab -->
+        <div id="device" class="tab-content">
+            <h2 style="margin-bottom: 20px; color: #fafafa;">📱 Device Performance</h2>
+
+            <!-- Device Cards -->
+            <div class="device-comparison">
+                <div class="device-card">
+                    <div class="device-icon">📱</div>
+                    <div class="device-name">iPhone (iOS)</div>
+                    <div class="device-metrics">
+                        <div class="device-metric">
+                            <span class="device-metric-label">Spend</span>
+                            <span class="device-metric-value">$185,400</span>
+                        </div>
+                        <div class="device-metric">
+                            <span class="device-metric-label">Revenue</span>
+                            <span class="device-metric-value">$519,420</span>
+                        </div>
+                        <div class="device-metric">
+                            <span class="device-metric-label">ROAS</span>
+                            <span class="device-metric-value" style="color: #2ca02c;">2.80x ⭐</span>
+                        </div>
+                        <div class="device-metric">
+                            <span class="device-metric-label">CPA</span>
+                            <span class="device-metric-value">$69.18</span>
+                        </div>
+                        <div class="device-metric">
+                            <span class="device-metric-label">CTR</span>
+                            <span class="device-metric-value">3.1%</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="device-card">
+                    <div class="device-icon">📱</div>
+                    <div class="device-name">Android</div>
+                    <div class="device-metrics">
+                        <div class="device-metric">
+                            <span class="device-metric-label">Spend</span>
+                            <span class="device-metric-value">$128,900</span>
+                        </div>
+                        <div class="device-metric">
+                            <span class="device-metric-label">Revenue</span>
+                            <span class="device-metric-value">$335,544</span>
+                        </div>
+                        <div class="device-metric">
+                            <span class="device-metric-label">ROAS</span>
+                            <span class="device-metric-value" style="color: #1f77b4;">2.60x</span>
+                        </div>
+                        <div class="device-metric">
+                            <span class="device-metric-label">CPA</span>
+                            <span class="device-metric-value">$70.63</span>
+                        </div>
+                        <div class="device-metric">
+                            <span class="device-metric-label">CTR</span>
+                            <span class="device-metric-value">2.8%</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="device-card">
+                    <div class="device-icon">💻</div>
+                    <div class="device-name">Desktop</div>
+                    <div class="device-metrics">
+                        <div class="device-metric">
+                            <span class="device-metric-label">Spend</span>
+                            <span class="device-metric-value">$28,281</span>
+                        </div>
+                        <div class="device-metric">
+                            <span class="device-metric-label">Revenue</span>
+                            <span class="device-metric-value">$37,487</span>
+                        </div>
+                        <div class="device-metric">
+                            <span class="device-metric-label">ROAS</span>
+                            <span class="device-metric-value" style="color: #d62728;">1.33x</span>
+                        </div>
+                        <div class="device-metric">
+                            <span class="device-metric-label">CPA</span>
+                            <span class="device-metric-value">$86.48</span>
+                        </div>
+                        <div class="device-metric">
+                            <span class="device-metric-label">CTR</span>
+                            <span class="device-metric-value">2.2%</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="device-card">
+                    <div class="device-icon">📟</div>
+                    <div class="device-name">Tablet</div>
+                    <div class="device-metrics">
+                        <div class="device-metric">
+                            <span class="device-metric-label">Spend</span>
+                            <span class="device-metric-value">$8,575</span>
+                        </div>
+                        <div class="device-metric">
+                            <span class="device-metric-label">Revenue</span>
+                            <span class="device-metric-value">$15,435</span>
+                        </div>
+                        <div class="device-metric">
+                            <span class="device-metric-label">ROAS</span>
+                            <span class="device-metric-value" style="color: #ff7f0e;">1.80x</span>
+                        </div>
+                        <div class="device-metric">
+                            <span class="device-metric-label">CPA</span>
+                            <span class="device-metric-value">$78.92</span>
+                        </div>
+                        <div class="device-metric">
+                            <span class="device-metric-label">CTR</span>
+                            <span class="device-metric-value">2.4%</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Charts -->
+            <div class="chart-grid">
+                <div class="chart-container">
+                    <h3>📱 Spend Distribution by Device</h3>
+                    <canvas id="deviceSpendChart"></canvas>
+                </div>
+                
+                <div class="chart-container">
+                    <h3>📊 ROAS by Device</h3>
+                    <canvas id="deviceRoasChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Device Table -->
+            <div class="table-container">
+                <h3>📱 Device Performance Details</h3>
+                <table id="deviceTable">
+                    <thead>
+                        <tr>
+                            <th onclick="sortTable('deviceTable', 0)">Device Platform ↕</th>
+                            <th onclick="sortTable('deviceTable', 1)">OS/Device ↕</th>
+                            <th onclick="sortTable('deviceTable', 2)">Spend ↕</th>
+                            <th onclick="sortTable('deviceTable', 3)">Impressions ↕</th>
+                            <th onclick="sortTable('deviceTable', 4)">CTR ↕</th>
+                            <th onclick="sortTable('deviceTable', 5)">CPC ↕</th>
+                            <th onclick="sortTable('deviceTable', 6)">Conversions ↕</th>
+                            <th onclick="sortTable('deviceTable', 7)">CPA ↕</th>
+                            <th onclick="sortTable('deviceTable', 8)">Revenue ↕</th>
+                            <th onclick="sortTable('deviceTable', 9)">ROAS ↕</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Mobile</td>
+                            <td>iPhone</td>
+                            <td>$185,400.00</td>
+                            <td>7,248,000</td>
+                            <td>3.1%</td>
+                            <td>$0.82</td>
+                            <td>2,680</td>
+                            <td>$69.18</td>
+                            <td>$519,420.00</td>
+                            <td class="roas-excellent">2.80x <span class="segment-badge badge-top">⭐ Top</span></td>
+                        </tr>
+                        <tr>
+                            <td>Mobile</td>
+                            <td>Android</td>
+                            <td>$128,900.00</td>
+                            <td>5,142,000</td>
+                            <td>2.8%</td>
+                            <td>$0.88</td>
+                            <td>1,825</td>
+                            <td>$70.63</td>
+                            <td>$335,544.00</td>
+                            <td class="roas-excellent">2.60x <span class="segment-badge badge-high">High</span></td>
+                        </tr>
+                        <tr>
+                            <td>Tablet</td>
+                            <td>iPad</td>
+                            <td>$8,575.00</td>
+                            <td>385,000</td>
+                            <td>2.4%</td>
+                            <td>$0.92</td>
+                            <td>109</td>
+                            <td>$78.67</td>
+                            <td>$15,435.00</td>
+                            <td class="roas-warning">1.80x <span class="segment-badge badge-low">Low</span></td>
+                        </tr>
+                        <tr>
+                            <td>Desktop</td>
+                            <td>Windows</td>
+                            <td>$19,980.50</td>
+                            <td>824,000</td>
+                            <td>2.3%</td>
+                            <td>$1.06</td>
+                            <td>238</td>
+                            <td>$83.96</td>
+                            <td>$26,574.27</td>
+                            <td class="roas-warning">1.33x <span class="segment-badge badge-low">Low</span></td>
+                        </tr>
+                        <tr>
+                            <td>Desktop</td>
+                            <td>Mac</td>
+                            <td>$8,300.00</td>
+                            <td>342,000</td>
+                            <td>2.0%</td>
+                            <td>$1.21</td>
+                            <td>89</td>
+                            <td>$93.26</td>
+                            <td>$10,912.53</td>
+                            <td class="roas-warning">1.31x <span class="segment-badge badge-low">Low</span></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Platform Tab -->
+        <div id="platform" class="tab-content">
+            <h2 style="margin-bottom: 20px; color: #fafafa;">📺 Platform & Placement Performance</h2>
+
+            <!-- Charts -->
+            <div class="chart-grid">
+                <div class="chart-container">
+                    <h3>📱 Spend by Platform</h3>
+                    <canvas id="platformSpendChart"></canvas>
+                </div>
+                
+                <div class="chart-container">
+                    <h3>📊 ROAS by Placement</h3>
+                    <canvas id="placementRoasChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Platform Table -->
+            <div class="table-container">
+                <h3>📺 Platform & Placement Performance</h3>
+                <table id="platformTable">
+                    <thead>
+                        <tr>
+                            <th onclick="sortTable('platformTable', 0)">Platform ↕</th>
+                            <th onclick="sortTable('platformTable', 1)">Placement ↕</th>
+                            <th onclick="sortTable('platformTable', 2)">Spend ↕</th>
+                            <th onclick="sortTable('platformTable', 3)">Impressions ↕</th>
+                            <th onclick="sortTable('platformTable', 4)">CTR ↕</th>
+                            <th onclick="sortTable('platformTable', 5)">CPC ↕</th>
+                            <th onclick="sortTable('platformTable', 6)">Conversions ↕</th>
+                            <th onclick="sortTable('platformTable', 7)">CPA ↕</th>
+                            <th onclick="sortTable('platformTable', 8)">Revenue ↕</th>
+                            <th onclick="sortTable('platformTable', 9)">ROAS ↕</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Instagram</td>
+                            <td>Stories</td>
+                            <td>$98,500.00</td>
+                            <td>4,248,000</td>
+                            <td>3.2%</td>
+                            <td>$0.73</td>
+                            <td>1,450</td>
+                            <td>$67.93</td>
+                            <td>$282,090.00</td>
+                            <td class="roas-excellent">2.86x <span class="segment-badge badge-top">⭐ Top</span></td>
+                        </tr>
+                        <tr>
+                            <td>Facebook</td>
+                            <td>Feed</td>
+                            <td>$142,800.00</td>
+                            <td>5,842,000</td>
+                            <td>2.9%</td>
+                            <td>$0.85</td>
+                            <td>2,080</td>
+                            <td>$68.65</td>
+                            <td>$392,868.00</td>
+                            <td class="roas-excellent">2.75x <span class="segment-badge badge-high">High</span></td>
+                        </tr>
+                        <tr>
+                            <td>Instagram</td>
+                            <td>Feed</td>
+                            <td>$68,200.00</td>
+                            <td>2,748,000</td>
+                            <td>2.7%</td>
+                            <td>$0.92</td>
+                            <td>945</td>
+                            <td>$72.17</td>
+                            <td>$170,900.00</td>
+                            <td class="roas-excellent">2.51x <span class="segment-badge badge-high">High</span></td>
+                        </tr>
+                        <tr>
+                            <td>Facebook</td>
+                            <td>Stories</td>
+                            <td>$22,400.00</td>
+                            <td>985,000</td>
+                            <td>2.5%</td>
+                            <td>$0.90</td>
+                            <td>315</td>
+                            <td>$71.11</td>
+                            <td>$50,624.00</td>
+                            <td class="roas-good">2.26x <span class="segment-badge badge-medium">Medium</span></td>
+                        </tr>
+                        <tr>
+                            <td>Instagram</td>
+                            <td>Reels</td>
+                            <td>$33,080.50</td>
+                            <td>1,742,000</td>
+                            <td>2.4%</td>
+                            <td>$0.81</td>
+                            <td>357</td>
+                            <td>$92.69</td>
+                            <td>$46,592.70</td>
+                            <td class="roas-warning">1.41x <span class="segment-badge badge-low">Low</span></td>
+                        </tr>
+                        <tr>
+                            <td>Audience Network</td>
+                            <td>Native</td>
+                            <td>$12,400.00</td>
+                            <td>624,000</td>
+                            <td>1.8%</td>
+                            <td>$1.10</td>
+                            <td>142</td>
+                            <td>$87.32</td>
+                            <td>$16,368.00</td>
+                            <td class="roas-warning">1.32x <span class="segment-badge badge-low">Low</span></td>
+                        </tr>
+                        <tr>
+                            <td>Messenger</td>
+                            <td>Inbox</td>
+                            <td>$8,800.00</td>
+                            <td>385,000</td>
+                            <td>1.6%</td>
+                            <td>$1.43</td>
+                            <td>98</td>
+                            <td>$89.80</td>
+                            <td>$10,560.00</td>
+                            <td class="roas-warning">1.20x <span class="segment-badge badge-low">Low</span></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Tab switching
+        function switchTab(tabName) {
+            // Hide all tabs
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.remove('active');
+            });
+            
+            // Remove active from all sub-tabs
+            document.querySelectorAll('.sub-tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            // Show selected tab
+            document.getElementById(tabName).classList.add('active');
+            event.target.classList.add('active');
+        }
+
+        // Age ROAS Chart
+        const ageRoasCtx = document.getElementById('ageRoasChart').getContext('2d');
+        new Chart(ageRoasCtx, {
+            type: 'bar',
+            data: {
+                labels: ['18-24', '25-34', '35-44', '45-54', '55-64', '65+'],
+                datasets: [{
+                    label: 'ROAS',
+                    data: [2.20, 2.88, 2.68, 2.32, 2.09, 1.85],
+                    backgroundColor: ['#ff7f0e', '#2ca02c', '#2ca02c', '#1f77b4', '#1f77b4', '#ff7f0e']
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false }
+                },
+                scales: {
+                    x: {
+                        ticks: { color: '#999' },
+                        grid: { display: false }
+                    },
+                    y: {
+                        ticks: {
+                            color: '#999',
+                            callback: (value) => `${value}x`
+                        },
+                        grid: { color: '#333' }
+                    }
+                }
+            }
+        });
+
+        // Gender ROAS Chart
+        const genderRoasCtx = document.getElementById('genderRoasChart').getContext('2d');
+        new Chart(genderRoasCtx, {
+            type: 'bar',
+            data: {
+                labels: ['Male', 'Female', 'Unknown'],
+                datasets: [{
+                    label: 'ROAS',
+                    data: [2.58, 2.52, 2.21],
+                    backgroundColor: ['#1f77b4', '#ff7f0e', '#2ca02c']
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false }
+                },
+                scales: {
+                    x: {
+                        ticks: { color: '#999' },
+                        grid: { display: false }
+                    },
+                    y: {
+                        ticks: {
+                            color: '#999',
+                            callback: (value) => `${value}x`
+                        },
+                        grid: { color: '#333' }
+                    }
+                }
+            }
+        });
+
+        // Location Spend Chart
+        const locationSpendCtx = document.getElementById('locationSpendChart').getContext('2d');
+        new Chart(locationSpendCtx, {
+            type: 'bar',
+            data: {
+                labels: ['Riyadh', 'Kuwait City', 'Jeddah', 'Doha', 'Dammam'],
+                datasets: [{
+                    label: 'Spend',
+                    data: [95200, 78400, 62800, 54900, 18500],
+                    backgroundColor: '#9467bd'
+                }]
+            },
+            options: {
+                indexAxis: 'y',
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false }
+                },
+                scales: {
+                    x: {
+                        ticks: {
+                            color: '#999',
+                            callback: (value) => `$${value/1000}K`
+                        },
+                        grid: { color: '#333' }
+                    },
+                    y: {
+                        ticks: { color: '#999' },
+                        grid: { display: false }
+                    }
+                }
+            }
+        });
+
+        // Location ROAS Chart
+        const locationRoasCtx = document.getElementById('locationRoasChart').getContext('2d');
+        new Chart(locationRoasCtx, {
+            type: 'bar',
+            data: {
+                labels: ['Kuwait City', 'Riyadh', 'Jeddah', 'Doha', 'Dammam'],
+                datasets: [{
+                    label: 'ROAS',
+                    data: [2.86, 2.69, 2.60, 2.30, 2.26],
+                    backgroundColor: ['#2ca02c', '#2ca02c', '#2ca02c', '#1f77b4', '#1f77b4']
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false }
+                },
+                scales: {
+                    x: {
+                        ticks: { color: '#999' },
+                        grid: { display: false }
+                    },
+                    y: {
+                        ticks: {
+                            color: '#999',
+                            callback: (value) => `${value}x`
+                        },
+                        grid: { color: '#333' }
+                    }
+                }
+            }
+        });
+
+        // Device Spend Chart
+        const deviceSpendCtx = document.getElementById('deviceSpendChart').getContext('2d');
+        new Chart(deviceSpendCtx, {
+            type: 'doughnut',
+            data: {
+                labels: ['iPhone', 'Android', 'Desktop', 'Tablet'],
+                datasets: [{
+                    data: [185400, 128900, 28281, 8575],
+                    backgroundColor: ['#1f77b4', '#2ca02c', '#ff7f0e', '#9467bd']
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: { color: '#fafafa' }
+                    }
+                }
+            }
+        });
+
+        // Device ROAS Chart
+        const deviceRoasCtx = document.getElementById('deviceRoasChart').getContext('2d');
+        new Chart(deviceRoasCtx, {
+            type: 'bar',
+            data: {
+                labels: ['iPhone', 'Android', 'Tablet', 'Desktop'],
+                datasets: [{
+                    label: 'ROAS',
+                    data: [2.80, 2.60, 1.80, 1.33],
+                    backgroundColor: ['#2ca02c', '#2ca02c', '#ff7f0e', '#d62728']
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false }
+                },
+                scales: {
+                    x: {
+                        ticks: { color: '#999' },
+                        grid: { display: false }
+                    },
+                    y: {
+                        ticks: {
+                            color: '#999',
+                            callback: (value) => `${value}x`
+                        },
+                        grid: { color: '#333' }
+                    }
+                }
+            }
+        });
+
+        // Platform Spend Chart
+        const platformSpendCtx = document.getElementById('platformSpendChart').getContext('2d');
+        new Chart(platformSpendCtx, {
+            type: 'bar',
+            data: {
+                labels: ['Facebook Feed', 'Instagram Stories', 'Instagram Feed', 'Instagram Reels', 'Facebook Stories'],
+                datasets: [{
+                    label: 'Spend',
+                    data: [142800, 98500, 68200, 33081, 22400],
+                    backgroundColor: '#9467bd'
+                }]
+            },
+            options: {
+                indexAxis: 'y',
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false }
+                },
+                scales: {
+                    x: {
+                        ticks: {
+                            color: '#999',
+                            callback: (value) => `$${value/1000}K`
+                        },
+                        grid: { color: '#333' }
+                    },
+                    y: {
+                        ticks: { color: '#999', font: { size: 10 } },
+                        grid: { display: false }
+                    }
+                }
+            }
+        });
+
+        // Placement ROAS Chart
+        const placementRoasCtx = document.getElementById('placementRoasChart').getContext('2d');
+        new Chart(placementRoasCtx, {
+            type: 'bar',
+            data: {
+                labels: ['IG Stories', 'FB Feed', 'IG Feed', 'FB Stories', 'IG Reels'],
+                datasets: [{
+                    label: 'ROAS',
+                    data: [2.86, 2.75, 2.51, 2.26, 1.41],
+                    backgroundColor: ['#2ca02c', '#2ca02c', '#2ca02c', '#1f77b4', '#d62728']
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false }
+                },
+                scales: {
+                    x: {
+                        ticks: { color: '#999' },
+                        grid: { display: false }
+                    },
+                    y: {
+                        ticks: {
+                            color: '#999',
+                            callback: (value) => `${value}x`
+                        },
+                        grid: { color: '#333' }
+                    }
+                }
+            }
+        });
+
+        // Table sorting function
+        function sortTable(tableId, columnIndex) {
+            const table = document.getElementById(tableId);
+            const tbody = table.querySelector('tbody');
+            const rows = Array.from(tbody.querySelectorAll('tr'));
+            
+            rows.sort((a, b) => {
+                let aValue = a.cells[columnIndex].textContent;
+                let bValue = b.cells[columnIndex].textContent;
+                
+                // Remove currency symbols, 'x', '%' and commas for numeric comparison
+                if (aValue.includes('$')) {
+                    aValue = parseFloat(aValue.replace(/[$,]/g, ''));
+                    bValue = parseFloat(bValue.replace(/[$,]/g, ''));
+                } else if (aValue.includes('x')) {
+                    aValue = parseFloat(aValue.replace(/x.*/, ''));
+                    bValue = parseFloat(bValue.replace(/x.*/, ''));
+                } else if (aValue.includes('%')) {
+                    aValue = parseFloat(aValue.replace('%', ''));
+                    bValue = parseFloat(bValue.replace('%', ''));
+                } else if (!isNaN(aValue.replace(/,/g, ''))) {
+                    aValue = parseFloat(aValue.replace(/,/g, ''));
+                    bValue = parseFloat(bValue.replace(/,/g, ''));
+                }
+                
+                return bValue - aValue; // Descending order
+            });
+            
+            rows.forEach(row => tbody.appendChild(row));
+        }
+
+        function applyFilters() {
+            console.log('Filters applied!');
+            alert('In the functional version, this would reload data based on selected filters.');
+        }
+    </script>
+</body>
+</html>
