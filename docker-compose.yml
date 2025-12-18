@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   backend:
     build:
@@ -12,8 +10,6 @@ services:
       - NODE_ENV=production
       - PORT=5000
       - ALLOWED_ORIGINS=http://localhost,http://localhost:3000,http://frontend
-    env_file:
-      - ./backend/.env
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "wget", "-q", "--spider", "http://localhost:5000/health"]
